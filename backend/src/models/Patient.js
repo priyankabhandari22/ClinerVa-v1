@@ -32,19 +32,21 @@ const patientSchema = new mongoose.Schema(
       required: true
     },
     location: {
-      city: String,
-      state: String,
-      coordinates: {
-        type: {
-          type: String,
-          enum: ['Point'],
-          default: 'Point'
-        },
-        coordinates: {
-          type: [Number], // [longitude, latitude]
-          default: [0, 0]
-        }
-      }
+      type: String,
+      default: ''
+    },
+    diagnosis: {
+      type: String,
+      default: ''
+    },
+    smokingStatus: {
+      type: String,
+      enum: ['Never', 'Former', 'Current'],
+      default: 'Never'
+    },
+    surgicalHistory: {
+      type: String,
+      default: 'None'
     },
     conditions: [String], // e.g., ["Type 2 Diabetes", "Hypertension"]
     medications: [String],
@@ -65,8 +67,7 @@ const patientSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Create geospatial index for location-based queries
-patientSchema.index({ 'location.coordinates': '2dsphere' });
+// Create indexes
 patientSchema.index({ conditions: 1 });
 patientSchema.index({ age: 1 });
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import HealthProfile from '../components/HealthProfile';
 import { 
   LogOut, 
   UserCircle, 
@@ -11,6 +12,7 @@ import {
   Brain,
   MapPin,
   Bookmark,
+  Loader2,
   Bell,
   Settings,
   Search,
@@ -19,23 +21,62 @@ import {
   Building2,
   Syringe,
   Calendar,
-  HeartPulse
+  HeartPulse,
+  X
 } from 'lucide-react';
+import axios from 'axios';
 
 export default function PatientDashboard() {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Modal State for Medical Info
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [medicalData, setMedicalData] = useState({
+    age: 52,
+    gender: "Male",
+    diagnosis: "Type 2 Diabetes",
+    medications: "Metformin",
+    labResults: { HbA1c: 7.8, eGFR: 65 },
+    smokingStatus: "Never",
+    surgicalHistory: "None",
+    location: "Mumbai"
+  });
 
-  // Simulate dashboard data fetching
+  // Fetch Patient Profile on component mount
   useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, [activeTab]);
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem('clinerva_token');
+        if (!token) return;
+
+        const { data } = await axios.get('http://localhost:5000/api/patients/profile/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (data && data.patient) {
+          const pt = data.patient;
+          setMedicalData({
+            age: pt.age || 52,
+            gender: pt.gender || 'Male',
+            diagnosis: pt.diagnosis || '',
+            medications: Array.isArray(pt.medications) ? pt.medications.join(', ') : (pt.medications || ''),
+            labResults: pt.labResults || { HbA1c: 0, eGFR: 0 },
+            smokingStatus: pt.smokingStatus || 'Never',
+            surgicalHistory: pt.surgicalHistory || 'None',
+            location: pt.location || 'Mumbai'
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching patient profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -191,7 +232,10 @@ export default function PatientDashboard() {
               <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Your Health Journey</h1>
               <p className="text-slate-500 mt-2 text-lg">AI-powered trial matching based on your unique medical profile.</p>
             </div>
-            <button className="bg-brand-50 text-brand-700 border border-brand-200 px-5 py-2.5 rounded-xl font-bold hover:bg-brand-100 transition-colors flex items-center space-x-2 w-fit">
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="bg-brand-50 text-brand-700 border border-brand-200 px-5 py-2.5 rounded-xl font-bold hover:bg-brand-100 transition-colors flex items-center space-x-2 w-fit"
+            >
               <FileText className="w-5 h-5" />
               <span>Update Medical Info</span>
             </button>
@@ -442,8 +486,10 @@ export default function PatientDashboard() {
             </div>
           </div>
             </>
+          ) : activeTab === 'My Health Profile' ? (
+            <HealthProfile patient={medicalData} isLoading={isLoading} />
           ) : activeTab === 'Profile' ? (
-            <PatientProfile />
+            <PatientProfile medicalData={medicalData} onEdit={() => setIsModalOpen(true)} />
           ) : activeTab === 'Settings' ? (
             <SettingsView />
           ) : (
@@ -453,79 +499,139 @@ export default function PatientDashboard() {
           )}
         </div>
       </main>
+
+      {/* --- Medical Info Modal --- */}
+      {isModalOpen && (
+        <MedicalInfoModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          data={medicalData}
+          onSave={setMedicalData}
+        />
+      )}
     </div>
   );
 }
 
-function PatientProfile() {
+function PatientProfile({ medicalData, onEdit }) {
   const { user } = useAuth();
-  const [isSaving, setIsSaving] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  const handleUpdate = () => {
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
-    }, 1200);
-  };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {showSuccess && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 p-4 rounded-xl flex items-center space-x-3 text-sm font-bold animate-fade-in-up">
-          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-          <span>Your medical profile has been updated successfully!</span>
-        </div>
-      )}
+    <div className="max-w-4xl mx-auto space-y-6">
       
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in-up">
-        <div className="p-8 border-b border-slate-100 flex items-center space-x-6">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold shadow-md overflow-hidden shrink-0">
-            <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Jane" alt="Jane" className="w-full h-full object-cover" />
+        {/* Header */}
+        <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center space-x-6">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold shadow-md overflow-hidden shrink-0">
+              <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${user?.name || 'Patient'}`} alt={user?.name || 'Patient'} className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">{user?.name || 'Patient'}</h2>
+              <p className="text-brand-600 font-bold tracking-wide text-sm mt-1 bg-brand-50 inline-block px-3 py-1 rounded-md capitalize">{user?.role || 'Patient'}</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900">{user?.name || 'Patient'}</h2>
-            <p className="text-brand-600 font-bold tracking-wide text-sm mt-1 bg-brand-50 inline-block px-3 py-1 rounded-md capitalize">{user?.role || 'Patient'}</p>
-          </div>
+          <button 
+            onClick={onEdit}
+            className="flex items-center space-x-2 bg-brand-50 hover:bg-brand-100 text-brand-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+            <span>Edit Profile</span>
+          </button>
         </div>
-        <div className="p-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Full Name</label>
-              <input type="text" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 transition-colors" defaultValue={user?.name || ''} />
+
+        {/* Content Body */}
+        <div className="p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {/* Left Column: Demographics & Account */}
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Account Details</h3>
+                <div className="space-y-4">
+                  <div>
+                    <span className="block text-sm font-semibold text-slate-500 mb-1">Email Address</span>
+                    <span className="block text-base font-bold text-slate-900">{user?.email || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="block text-sm font-semibold text-slate-500 mb-1">Location</span>
+                    <span className="block text-base font-bold text-slate-900">{medicalData?.location || 'Not specified'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Vitals & Demographics</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <span className="block text-xs font-semibold text-slate-500 mb-1">Age</span>
+                    <span className="block text-xl font-extrabold text-slate-800">{medicalData?.age || '--'}</span>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <span className="block text-xs font-semibold text-slate-500 mb-1">Gender</span>
+                    <span className="block text-xl font-extrabold text-slate-800">{medicalData?.gender || '--'}</span>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <span className="block text-xs font-semibold text-slate-500 mb-1">HbA1c</span>
+                    <span className="block text-xl font-extrabold text-emerald-600">{medicalData?.labResults?.HbA1c || '--'}%</span>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <span className="block text-xs font-semibold text-slate-500 mb-1">eGFR</span>
+                    <span className="block text-xl font-extrabold text-emerald-600">{medicalData?.labResults?.eGFR || '--'}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Email</label>
-              <input type="email" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 transition-colors" defaultValue={user?.email || ''} />
+
+            {/* Right Column: Clinical Profile */}
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2 flex items-center space-x-2">
+                  <Activity className="w-4 h-4" />
+                  <span>Clinical Profile</span>
+                </h3>
+                
+                <div className="space-y-6">
+                  <div>
+                    <span className="block text-sm font-semibold text-slate-500 mb-1">Primary Diagnosis</span>
+                    <div className="inline-block bg-indigo-50 border border-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-sm font-bold">
+                      {medicalData?.diagnosis || 'None'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="block text-sm font-semibold text-slate-500 mb-2">Current Medications</span>
+                    <div className="flex flex-wrap gap-2">
+                      {medicalData?.medications ? (
+                        medicalData.medications.split(',').map((med, idx) => (
+                          <span key={idx} className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-semibold">
+                            {med.trim()}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm font-medium text-slate-400">No medications listed</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="block text-sm font-semibold text-slate-500 mb-1">Surgical History</span>
+                    <p className="text-sm font-bold text-slate-800 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                      {medicalData?.surgicalHistory || 'None'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="block text-sm font-semibold text-slate-500 mb-1">Smoking Status</span>
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${
+                      medicalData?.smokingStatus === 'Current' ? 'bg-red-50 text-red-600' :
+                      medicalData?.smokingStatus === 'Former' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'
+                    }`}>
+                      {medicalData?.smokingStatus || 'Unknown'}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Role</label>
-              <input type="text" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 transition-colors capitalize text-slate-500" value={user?.role || 'patient'} readOnly />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Medical History Summary (Confidential)</label>
-            <textarea rows="4" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 transition-colors resize-none" placeholder="Enter your medical history..." defaultValue="" />
-          </div>
-          <div className="pt-4 flex justify-end">
-            <button 
-              onClick={handleUpdate}
-              disabled={isSaving}
-              className={`px-6 py-3 rounded-xl font-bold transition-all shadow-lg flex items-center space-x-2 ${
-                isSaving ? 'bg-brand-400 text-white cursor-not-allowed shadow-none' : 'bg-brand-600 text-white hover:bg-brand-700 shadow-brand-500/30 active:scale-[0.98]'
-              }`}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <span>Update Profile</span>
-              )}
-            </button>
           </div>
         </div>
       </div>
@@ -572,6 +678,194 @@ function SettingsView() {
         <h3 className="text-xl font-bold text-red-700 mb-2">Danger Zone</h3>
         <p className="text-sm font-medium text-red-600 mb-6 max-w-lg">Once you delete your account, there is no going back. You will lose access to all your clinical trial matches and medical profile data.</p>
         <button className="bg-red-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-red-700 shadow-sm transition-all">Delete Account</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Medical Info Modal Component ─────────────────────────────────────────────
+function MedicalInfoModal({ isOpen, onClose, data, onSave }) {
+  const [formData, setFormData] = useState({ ...data });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name.startsWith('lab_')) {
+      const labKey = name.split('_')[1];
+      setFormData(prev => ({
+        ...prev,
+        labResults: { ...prev.labResults, [labKey]: value }
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsSubmitting(true);
+      const token = localStorage.getItem('clinerva_token');
+      
+      const payload = { ...formData };
+      
+      const res = await axios.post('http://localhost:5000/api/patients/profile', payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.data.success) {
+        onSave(formData);
+        onClose();
+      }
+    } catch (error) {
+      console.error('Failed to save profile:', error);
+      alert('Failed to save profile data. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div 
+        className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-slate-100 flex-shrink-0">
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+              <Activity className="w-6 h-6 text-brand-600" />
+              Update Medical Information
+            </h2>
+            <p className="text-sm font-medium text-slate-500 mt-1">
+              Ensure your health profile is accurate for better trial matching.
+            </p>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Scrollable Form Body */}
+        <div className="p-6 overflow-y-auto custom-scroll space-y-6 flex-1">
+          {/* Section 1: Demographics */}
+          <div>
+            <p className="text-xs font-bold text-brand-600 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Demographics</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Age</label>
+                <input 
+                  type="number" name="age" value={formData.age} onChange={handleChange}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-sm font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Gender</label>
+                <select 
+                  name="gender" value={formData.gender} onChange={handleChange}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-sm font-medium"
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Location</label>
+                <input 
+                  type="text" name="location" value={formData.location} onChange={handleChange}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-sm font-medium"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Clinical Details */}
+          <div>
+            <p className="text-xs font-bold text-brand-600 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Clinical Details</p>
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Diagnosis</label>
+                <input 
+                  type="text" name="diagnosis" value={formData.diagnosis} onChange={handleChange}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-sm font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Medications (Comma separated)</label>
+                <input 
+                  type="text" name="medications" value={formData.medications} onChange={handleChange}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-sm font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Surgical History</label>
+                <input 
+                  type="text" name="surgicalHistory" value={formData.surgicalHistory} onChange={handleChange}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-sm font-medium"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Lab Results & Lifestyle */}
+          <div>
+            <p className="text-xs font-bold text-brand-600 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Vitals & Lifestyle</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">HbA1c</label>
+                <input 
+                  type="number" step="0.1" name="lab_HbA1c" value={formData.labResults?.HbA1c || 0} onChange={handleChange}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-sm font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">eGFR</label>
+                <input 
+                  type="number" name="lab_eGFR" value={formData.labResults?.eGFR || 0} onChange={handleChange}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-sm font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Smoking Status</label>
+                <select 
+                  name="smokingStatus" value={formData.smokingStatus} onChange={handleChange}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-sm font-medium"
+                >
+                  <option value="Never">Never</option>
+                  <option value="Former">Former</option>
+                  <option value="Current">Current</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-6 border-t border-slate-100 flex items-center justify-end space-x-4 shrink-0 bg-slate-50 rounded-b-2xl">
+          <button 
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-xl font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={handleSave}
+            disabled={isSubmitting}
+            className={`px-6 py-2.5 rounded-xl font-bold text-white transition-all ${
+              isSubmitting 
+                ? 'bg-brand-400 cursor-not-allowed text-white/80' 
+                : 'bg-brand-600 shadow-lg shadow-brand-500/30 hover:bg-brand-700 active:scale-[0.98]'
+            }`}
+          >
+            {isSubmitting ? (
+               <span className="flex items-center space-x-2"><Loader2 className="w-5 h-5 animate-spin"/> <span>Saving...</span></span>
+            ) : "Save Information"}
+          </button>
+        </div>
       </div>
     </div>
   );

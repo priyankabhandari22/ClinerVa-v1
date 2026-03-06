@@ -63,7 +63,6 @@ const commissionSchema = new mongoose.Schema(
 
 commissionSchema.index({ doctorId: 1 });
 commissionSchema.index({ status: 1 });
-commissionSchema.index({ trialId: 1 });
 
 const Commission = mongoose.model('Commission', commissionSchema);
 

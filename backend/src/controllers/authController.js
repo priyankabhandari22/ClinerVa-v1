@@ -21,8 +21,8 @@ export const registerUser = async (req, res, next) => {
     const user = await User.create({
       name,
       email,
-      password,
-      role: role || 'patient', // default to patient if not provided
+      passwordHash: password, // The schema expects 'passwordHash', the pre-save hook will hash it
+      role: (role || 'patient').toUpperCase(), // ensure it matches 'PATIENT', 'DOCTOR', etc.
     });
 
     if (user) {
