@@ -32,7 +32,7 @@ export default function Login() {
         setIsLoading(false);
         return;
       }
-      result = await register(name, email, password, role);
+      result = await register(name, email, password, role.toUpperCase()); // Convert role to uppercase to match backend schema
     }
 
     if (result.success) {
