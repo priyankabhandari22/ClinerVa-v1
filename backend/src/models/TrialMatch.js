@@ -59,7 +59,6 @@ const trialMatchSchema = new mongoose.Schema(
 );
 
 trialMatchSchema.index({ patientId: 1 });
-trialMatchSchema.index({ trialId: 1 });
 trialMatchSchema.index({ eligibilityScore: -1 });
 trialMatchSchema.index({ status: 1 });
 

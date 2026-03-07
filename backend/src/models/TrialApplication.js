@@ -54,7 +54,6 @@ const trialApplicationSchema = new mongoose.Schema(
 );
 
 trialApplicationSchema.index({ patientId: 1 });
-trialApplicationSchema.index({ trialId: 1 });
 trialApplicationSchema.index({ applicationStatus: 1 });
 trialApplicationSchema.index({ doctorId: 1 });
 

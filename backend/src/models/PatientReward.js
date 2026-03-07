@@ -61,7 +61,6 @@ const patientRewardSchema = new mongoose.Schema(
 
 patientRewardSchema.index({ patientId: 1 });
 patientRewardSchema.index({ status: 1 });
-patientRewardSchema.index({ trialId: 1 });
 
 const PatientReward = mongoose.model('PatientReward', patientRewardSchema);
 

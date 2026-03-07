@@ -58,7 +58,6 @@ const trialCriteriaSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-trialCriteriaSchema.index({ trialId: 1 });
 
 const TrialCriteria = mongoose.model('TrialCriteria', trialCriteriaSchema);
 

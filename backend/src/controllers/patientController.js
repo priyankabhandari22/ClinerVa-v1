@@ -22,6 +22,76 @@ const getPatientProfile = async (req, res) => {
   }
 };
 
+const getMyProfile = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const patient = await PatientService.getPatientByUserId(userId);
+
+    // If no profile yet, return an empty but successful body
+    if (!patient) {
+       return res.json({ success: true, patient: null });
+    }
+
+    res.json({
+      success: true,
+      patient
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const upsertMyProfile = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const { 
+      age, 
+      gender, 
+      location, 
+      diagnosis, 
+      medications, 
+      surgicalHistory, 
+      labResults, 
+      smokingStatus 
+    } = req.body;
+
+    // Parse medications string to array if provided as comma-separated string
+    let parsedMedications = [];
+    if (typeof medications === 'string') {
+      parsedMedications = medications.split(',').map(m => m.trim()).filter(Boolean);
+    } else if (Array.isArray(medications)) {
+      parsedMedications = medications;
+    }
+
+    // Compile the update data
+    const updateData = {
+      age,
+      gender,
+      location,
+      diagnosis,
+      medications: parsedMedications,
+      surgicalHistory,
+      labResults,
+      smokingStatus
+    };
+    
+    // Also push the diagnosis to 'conditions' array so existing queries don't break
+    if (diagnosis) {
+      updateData.$addToSet = { conditions: diagnosis };
+    }
+
+    const patient = await PatientService.upsertPatientProfile(userId, updateData);
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      patient
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const createPatientProfile = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -144,13 +214,91 @@ const exportAnonymousData = async (req, res) => {
   }
 };
 
+const getMedicalRecords = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const records = await PatientService.getMedicalRecords(patientId);
+
+    res.json({
+      success: true,
+      records
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getMedicalRecordsMe = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const records = await PatientService.getMedicalRecordsByUserId(userId);
+
+    res.json({
+      success: true,
+      records
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const addMedicalRecord = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const { userId } = req.user;
+    const recordData = req.body;
+
+    // Add uploadedBy user info
+    const record = await PatientService.addMedicalRecord(patientId, {
+      ...recordData,
+      uploadedBy: userId
+    });
+
+    res.json({
+      success: true,
+      message: 'Medical record added successfully',
+      record
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const addClinicalNote = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const { userId } = req.user;
+    const { note } = req.body;
+
+    if (!note) {
+      return res.status(400).json({ error: 'Clinical note is required' });
+    }
+
+    const record = await PatientService.addClinicalNote(patientId, userId, note);
+
+    res.json({
+      success: true,
+      message: 'Clinical note added successfully',
+      record
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export default {
   getPatientProfile,
+  getMyProfile,
+  upsertMyProfile,
   createPatientProfile,
   updatePatientProfile,
   addCondition,
   updateLabResults,
   getPatientStats,
   searchPatientsByCondition,
-  exportAnonymousData
+  exportAnonymousData,
+  getMedicalRecords,
+  getMedicalRecordsMe,
+  addMedicalRecord,
+  addClinicalNote
 };

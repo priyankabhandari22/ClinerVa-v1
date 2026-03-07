@@ -65,7 +65,6 @@ const notificationSchema = new mongoose.Schema(
 // Auto-delete expired notifications
 notificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-notificationSchema.index({ userId: 1 });
 notificationSchema.index({ isRead: 1 });
 notificationSchema.index({ type: 1 });
 notificationSchema.index({ createdAt: -1 });

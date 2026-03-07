@@ -1,4 +1,5 @@
 import Patient from '../models/Patient.js';
+import MedicalRecord from '../models/MedicalRecord.js';
 import User from '../models/User.js';
 import crypto from 'crypto';
 
@@ -42,6 +43,28 @@ class PatientService {
     delete updateData.anonymousId;
 
     return await Patient.findByIdAndUpdate(patientId, updateData, { new: true });
+  }
+
+  /**
+   * Upsert the logged-in user's patient profile
+   */
+  static async upsertPatientProfile(userId, updateData) {
+    // Ensure anonymousId exists if we are inserting
+    const anonymousId = `PAT_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    return await Patient.findOneAndUpdate(
+      { userId },
+      {
+        $setOnInsert: { anonymousId },
+        $set: updateData
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+        setDefaultsOnInsert: true
+      }
+    );
   }
 
   /**
@@ -214,6 +237,88 @@ class PatientService {
     }
 
     return results;
+  }
+
+  /**
+   * Get medical records for a patient
+   */
+  static async getMedicalRecords(patientId) {
+    const medicalRecord = await MedicalRecord.findOne({ patientId })
+      .populate('uploadedBy', 'name email')
+      .populate('lastModifiedBy', 'name email')
+      .populate('clinicalNotes.writerId', 'name role')
+      .exec();
+
+    return medicalRecord || { records: [], clinicalNotes: [] };
+  }
+
+  /**
+   * Get medical records for logged-in patient user
+   */
+  static async getMedicalRecordsByUserId(userId) {
+    // Find patient by userId
+    const patient = await Patient.findOne({ userId });
+    if (!patient) throw new Error('Patient profile not found');
+
+    // Get medical records for this patient
+    return await this.getMedicalRecords(patient._id);
+  }
+
+  /**
+   * Add medical record for patient
+   */
+  static async addMedicalRecord(patientId, recordData) {
+    let medicalRecord = await MedicalRecord.findOne({ patientId });
+
+    if (!medicalRecord) {
+      medicalRecord = new MedicalRecord({
+        patientId,
+        records: [],
+        clinicalNotes: []
+      });
+    }
+
+    // Add new record
+    if (recordData.fileUrl || recordData.description) {
+      medicalRecord.records.push({
+        type: recordData.type || 'Other',
+        fileUrl: recordData.fileUrl,
+        fileName: recordData.fileName,
+        fileSize: recordData.fileSize,
+        recordDate: recordData.recordDate || new Date(),
+        description: recordData.description,
+        documentId: recordData.documentId
+      });
+    }
+
+    return await medicalRecord.save();
+  }
+
+  /**
+   * Add clinical note to medical records
+   */
+  static async addClinicalNote(patientId, userId, note) {
+    let medicalRecord = await MedicalRecord.findOne({ patientId });
+
+    if (!medicalRecord) {
+      medicalRecord = new MedicalRecord({
+        patientId,
+        records: [],
+        clinicalNotes: []
+      });
+    }
+
+    // Get user info for writer details
+    const user = await User.findById(userId);
+
+    medicalRecord.clinicalNotes.push({
+      note,
+      writerName: user?.name || 'Unknown',
+      writerId: userId,
+      createdAt: new Date()
+    });
+
+    return await medicalRecord.save();
   }
 }
 

@@ -62,7 +62,6 @@ const researchLabSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-researchLabSchema.index({ userId: 1 });
 researchLabSchema.index({ organizationType: 1 });
 
 const ResearchLab = mongoose.model('ResearchLab', researchLabSchema);

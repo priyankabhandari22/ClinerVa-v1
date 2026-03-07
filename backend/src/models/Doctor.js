@@ -69,7 +69,6 @@ const doctorSchema = new mongoose.Schema(
 
 doctorSchema.index({ 'location.coordinates': '2dsphere' });
 doctorSchema.index({ specialization: 1 });
-doctorSchema.index({ userId: 1 });
 
 const Doctor = mongoose.model('Doctor', doctorSchema);
 

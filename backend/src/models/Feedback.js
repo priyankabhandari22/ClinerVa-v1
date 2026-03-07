@@ -53,7 +53,6 @@ const feedbackSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-feedbackSchema.index({ trialId: 1 });
 feedbackSchema.index({ patientId: 1 });
 feedbackSchema.index({ rating: -1 });
 
