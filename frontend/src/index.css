@@ -11,3 +11,70 @@
 body {
   @apply font-sans antialiased text-gray-900 bg-gray-50;
 }
+
+@layer utilities {
+  .animate-bg-gradient-sweep { animation: bg-gradient-sweep var(--gradient-speed, 3s) ease-in-out infinite; background-size: 200% 200%; }
+  .animate-pulse-heartbeat { animation: pulse-heartbeat 1.5s ease-in-out infinite; }
+  .animate-spin-twinkle { animation: spin-twinkle 4s linear infinite; }
+  .animate-shimmer-sweep { animation: shimmer-sweep 0.6s ease-in-out forwards; }
+  .animate-shadow-breathe { animation: shadow-breathe 2s ease-in-out infinite; }
+  .animate-float-up-fade { animation: float-up-fade 3s ease-out infinite; }
+  .animate-burst-particle { animation: burst-particle 0.8s ease-out forwards; }
+  .animate-success-bounce { animation: success-bounce 0.5s ease-in-out; }
+  
+  .typing-dots::after {
+    content: "";
+    animation: dot-typing 1.5s infinite;
+  }
+}
+
+@keyframes bg-gradient-sweep {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes pulse-heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+@keyframes spin-twinkle {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-150%) skewX(-15deg); }
+  100% { transform: translateX(250%) skewX(-15deg); }
+}
+@keyframes shadow-breathe {
+  0%, 100% { box-shadow: 0 8px 32px rgba(0, 191, 166, 0.35); }
+  50% { box-shadow: 0 8px 48px rgba(0, 191, 166, 0.55); }
+}
+@keyframes float-up-fade {
+  0% { transform: translateY(0); opacity: 0; }
+  10% { opacity: 0.8; }
+  100% { transform: translateY(-40px); opacity: 0; }
+}
+@keyframes burst-particle {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+}
+@keyframes dot-typing {
+  0% { content: ""; }
+  25% { content: "."; }
+  50% { content: ".."; }
+  75% { content: "..."; }
+  100% { content: ""; }
+}
+@keyframes success-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

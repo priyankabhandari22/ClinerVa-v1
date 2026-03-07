@@ -62,6 +62,10 @@ const patientSchema = new mongoose.Schema(
     consentGiven: {
       type: Boolean,
       default: false
+    },
+    savedTrials: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: []
     }
   },
   { timestamps: true }

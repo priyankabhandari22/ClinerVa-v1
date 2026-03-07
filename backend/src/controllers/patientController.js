@@ -259,28 +259,69 @@ const addMedicalRecord = async (req, res) => {
       message: 'Medical record added successfully',
       record
     });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
+
 const addClinicalNote = async (req, res) => {
   try {
     const { patientId } = req.params;
     const { userId } = req.user;
-    const { note } = req.body;
+    const noteData = req.body;
 
-    if (!note) {
-      return res.status(400).json({ error: 'Clinical note is required' });
-    }
-
-    const record = await PatientService.addClinicalNote(patientId, userId, note);
+    const record = await PatientService.addClinicalNote(patientId, userId, noteData);
 
     res.json({
       success: true,
       message: 'Clinical note added successfully',
       record
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getSavedTrials = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const savedTrials = await PatientService.getSavedTrials(userId);
+    res.json({ success: true, savedTrials });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const saveTrial = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const trialData = req.body;
+    
+    if (!trialData || !trialData.trialId) {
+       return res.status(400).json({ error: 'Valid trial data including trialId is required' });
+    }
+
+    const result = await PatientService.saveTrial(userId, trialData);
+    res.json(result);
+  } catch (error) {
+    console.error(">>> SAVE TRIAL ERROR:", error);
+    res.status(500).json({ error: error.message, stack: error.stack });
+  }
+};
+
+const removeSavedTrial = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { trialId } = req.params;
+
+    if (!trialId) {
+       return res.status(400).json({ error: 'trialId parameter is required' });
+    }
+
+    const result = await PatientService.removeSavedTrial(userId, trialId);
+    res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -300,5 +341,8 @@ export default {
   getMedicalRecords,
   getMedicalRecordsMe,
   addMedicalRecord,
-  addClinicalNote
+  addClinicalNote,
+  getSavedTrials,
+  saveTrial,
+  removeSavedTrial
 };

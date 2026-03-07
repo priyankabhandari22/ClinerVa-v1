@@ -249,7 +249,92 @@ class PatientService {
       .populate('clinicalNotes.writerId', 'name role')
       .exec();
 
-    return medicalRecord || { records: [], clinicalNotes: [] };
+    return medicalRecord;
+  }
+
+  /**
+   * Get a patient's saved trials
+   */
+  static async getSavedTrials(userId) {
+    const patient = await Patient.findOne({ userId }).select('savedTrials');
+    if (!patient) return [];
+    
+    // Sort descending by savedAt
+    return (patient.savedTrials || []).sort((a, b) => {
+      const dateA = new Date(a.savedAt || 0);
+      const dateB = new Date(b.savedAt || 0);
+      return dateB - dateA;
+    });
+  }
+
+  /**
+   * Save a trial for a patient
+   */
+  static async saveTrial(userId, trialData) {
+    console.log("Saving Trial to DB for user:", userId, " Trial ID:", trialData.trialId);
+    try {
+      // Ensure patient profile exists for this userId (create if doesn't exist)
+      // Provide default values for required fields to pass validation
+      let patient = await this.upsertPatientProfile(userId, {
+        age: 40, // Default age
+        gender: 'Other', // Default gender
+        location: '',
+        diagnosis: '',
+        smokingStatus: 'Never',
+        surgicalHistory: 'None'
+      });
+      
+      if (!patient) {
+        throw new Error('Patient profile required to save trials.');
+      }
+
+      if (!patient.savedTrials) {
+        patient.savedTrials = [];
+      }
+
+      // Check if duplicate
+      const exists = patient.savedTrials.some(t => t.trialId === trialData.trialId);
+      if (exists) {
+        return { alreadySaved: true };
+      }
+
+      // Append timestamp and force save
+      const trialWithTimestamp = {
+        ...trialData,
+        savedAt: new Date()
+      };
+      
+      patient.savedTrials.push(trialWithTimestamp);
+      
+      // Explicitly mark Modified due to Mixed Array Type constraints in mongoose
+      patient.markModified('savedTrials');
+      await patient.save();
+  
+      console.log("Successfully saved trial.");
+      return { success: true, savedTrial: trialWithTimestamp };
+    } catch(err) {
+      console.error("SERVICE ERROR:", err);
+      throw err;
+    }
+  }
+
+  /**
+   * Remove a trial from saved list
+   */
+  static async removeSavedTrial(userId, trialId) {
+    const patient = await Patient.findOne({ userId });
+    
+    if (!patient || !patient.savedTrials) return { success: true };
+
+    const originalLength = patient.savedTrials.length;
+    patient.savedTrials = patient.savedTrials.filter(t => t.trialId !== trialId);
+    
+    if (patient.savedTrials.length !== originalLength) {
+      patient.markModified('savedTrials');
+      await patient.save();
+    }
+    
+    return { success: true };
   }
 
   /**

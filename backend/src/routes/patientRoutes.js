@@ -14,6 +14,11 @@ router.get('/:patientId/medical-records', protect, patientController.getMedicalR
 router.post('/:patientId/medical-records', protect, patientController.addMedicalRecord);
 router.post('/:patientId/clinical-notes', protect, patientController.addClinicalNote);
 
+// Saved Trials Routes
+router.get('/saved-trials', protect, patientController.getSavedTrials);
+router.post('/saved-trials', protect, patientController.saveTrial);
+router.delete('/saved-trials/:trialId', protect, patientController.removeSavedTrial);
+
 // Patient Profile Routes
 router.post('/', protect, patientController.createPatientProfile);
 router.get('/stats', protect, authorizeRoles('DOCTOR', 'RESEARCHER', 'ADMIN'), patientController.getPatientStats);

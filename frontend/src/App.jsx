@@ -24,7 +24,7 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['PATIENT']}>
               <PatientDashboard />
-            // {/* </ProtectedRoute> */}
+            </ProtectedRoute>
           } 
         />
       </Routes>

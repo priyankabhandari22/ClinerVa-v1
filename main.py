@@ -169,22 +169,22 @@ def match_patient(request: MatchRequest):
                     eligible_count += 1
 
                     # b. Score
-                    score_result = calculate_score(rule_result, patient_loc, trial_loc)
+                    score_result = calculate_score(anon_patient, trial, rule_result)
 
                     # c. Explain
-                    explanation = explain(rule_result, score_result, trial_id=trial.get("trialId", ""))
+                    explanation = explain(anon_patient, trial, score_result)
 
                     ranked_results.append({
                         "trialId":         trial.get("trialId"),
                         "trialName":       trial.get("name"),
-                        "confidenceScore": score_result["confidenceScore"],
-                        "category":        score_result["category"],
-                        "color":           score_result["color"],
+                        "confidenceScore": score_result.get("finalScore", 0),
+                        "category":        score_result.get("category"),
+                        "color":           score_result.get("color"),
                         "phase":           trial.get("phase"),
                         "location":        trial_loc,
                         "status":          trial.get("status"),
                         "sponsor":         trial.get("sponsor"),
-                        "scoreBreakdown":  score_result["scoreBreakdown"],
+                        "scoreBreakdown":  score_result.get("featureVector", {}),
                         "ruleResult":      rule_result,
                         "explanation":     explanation,
                     })
