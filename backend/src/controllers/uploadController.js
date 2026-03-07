@@ -37,17 +37,25 @@ export const uploadUserProfileImage = async (req, res) => {
         }
 
         // Extract the new Cloudinary result from multer's req.file
-        const uploadResult = getUploadResult(req.file);
+        let uploadResult;
+        try {
+            uploadResult = getUploadResult(req.file);
+        } catch (err) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid file upload: ' + err.message
+            });
+        }
 
         // Persist URL + publicId on the User document
         user.profileImage = {
-            url: uploadResult.url,
-            publicId: uploadResult.publicId
+            url: uploadResult?.url || null,
+            publicId: uploadResult?.publicId || null
         };
         await user.save();
 
         // Generate responsive variants for the frontend
-        const variants = getImageVariants(uploadResult.publicId);
+        const variants = uploadResult?.publicId ? getImageVariants(uploadResult.publicId) : {};
 
         console.log(`[UPLOAD] Profile image updated for user ${user.email}`);
         return res.status(200).json({

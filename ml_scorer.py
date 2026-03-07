@@ -7,6 +7,11 @@ Requires: scikit-learn, joblib
 
 import os
 import joblib
+import warnings
+
+# Suppress sklearn UserWarning about feature names
+warnings.filterwarnings("ignore", category=UserWarning, module="sklearn.utils.validation")
+warnings.filterwarnings("ignore", category=UserWarning, module="sklearn.base")
 
 # ── Lazy-load model + scaler (loads once on first use) ───────────────────────
 _model  = None

@@ -49,12 +49,13 @@ export const uploadProfile = multer({
  */
 export const getUploadResult = (file) => {
   if (!file) throw new Error('No file provided');
+  if (!file.path || !file.filename) throw new Error('Invalid upload result: missing path or filename');
   return {
     success: true,
     url: file.path,         // Cloudinary secure URL
     publicId: file.filename, // Cloudinary public_id
-    size: file.size,
-    format: file.mimetype
+    size: file.size || 0,
+    format: file.mimetype || 'unknown'
   };
 };
 
@@ -79,15 +80,16 @@ export const deleteProfileImage = async (publicId) => {
 export const getImageMetadata = async (publicId) => {
   try {
     const result = await cloudinary.api.resource(publicId);
+    if (!result) throw new Error('Resource not found');
     return {
-      publicId: result.public_id,
-      url: result.secure_url,
-      size: result.bytes,
-      width: result.width,
-      height: result.height,
-      format: result.format,
-      createdAt: result.uploaded_at,
-      tags: result.tags || []
+      publicId: result?.public_id || publicId,
+      url: result?.secure_url || '',
+      size: result?.bytes || 0,
+      width: result?.width || 0,
+      height: result?.height || 0,
+      format: result?.format || 'unknown',
+      createdAt: result?.uploaded_at || new Date().toISOString(),
+      tags: result?.tags || []
     };
   } catch (error) {
     throw new Error(`Failed to get metadata: ${error.message}`);

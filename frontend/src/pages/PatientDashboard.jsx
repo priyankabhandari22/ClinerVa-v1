@@ -89,7 +89,7 @@ export default function PatientDashboard() {
     setMatchResults(null);
 
     try {
-      const response = await fetch('http://localhost:8080/match', {
+      const response = await fetch('http://localhost:8000/match', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

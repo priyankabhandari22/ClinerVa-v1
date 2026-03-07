@@ -75,16 +75,17 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await uploadAPI.uploadProfileImage(file);
       if (res.data.success) {
-        // Merge updated profileImage into current user state
+        // Safely access nested data with fallbacks
+        const uploadedData = res.data.data || {};
         const updated = {
           ...user,
           profileImage: {
-            url: res.data.data.url,
-            publicId: res.data.data.publicId,
+            url: uploadedData.url || null,
+            publicId: uploadedData.publicId || null,
           },
         };
         persistUser(updated);
-        return { success: true, data: res.data.data };
+        return { success: true, data: uploadedData };
       }
       return { success: false, message: res.data.message || 'Upload failed' };
     } catch (error) {
@@ -99,12 +100,12 @@ export const AuthProvider = ({ children }) => {
   const deleteProfileImage = useCallback(async () => {
     try {
       const res = await uploadAPI.deleteProfileImage();
-      if (res.data.success) {
+      if (res.data && res.data.success) {
         const updated = { ...user, profileImage: { url: null, publicId: null } };
         persistUser(updated);
         return { success: true };
       }
-      return { success: false, message: res.data.message };
+      return { success: false, message: res.data?.message || 'Delete failed' };
     } catch (error) {
       return {
         success: false,
