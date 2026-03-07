@@ -7,6 +7,7 @@ import {
   changePassword,
 } from '../controllers/authController.js';
 import { protect, authorizeRoles } from '../middlewares/authMiddleware.js';
+import ResearchLab from '../models/ResearchLab.js';
 
 const router = express.Router();
 
@@ -23,6 +24,19 @@ router.post('/register', registerUser);
  * Body: { email, password }
  */
 router.post('/login', loginUser);
+
+/**
+ * GET /api/auth/labs
+ * Returns all ResearchLab documents (for researcher UI dropdowns)
+ */
+router.get('/labs', async (req, res) => {
+  try {
+    const labs = await ResearchLab.find({}).select('_id labName organizationType contactEmail').lean();
+    res.json({ success: true, count: labs.length, labs });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 // ── Protected (JWT required) ─────────────────────────────────────────────────
 /**

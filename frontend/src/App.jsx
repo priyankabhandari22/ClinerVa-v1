@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import DoctorDashboard from './pages/DoctorDashboard';
 import PatientDashboard from './pages/PatientDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import Researcher from './pages/Researcher';
 
 function App() {
   return (
@@ -27,6 +28,8 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        <Route path="/researcher" element={<Researcher />} />
+
       </Routes>
     </Router>
   );
