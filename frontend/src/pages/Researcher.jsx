@@ -449,7 +449,6 @@ function CreateTrialPanel({ setActiveTab }) {
   });
   const [loading, setLoading] = useState(false);
   const [labs, setLabs] = useState([]);
-  const [selectedLabId, setSelectedLabId] = useState("");
   const [toast, setToast] = useState(null); // { type: "success"|"error", msg }
 
   useEffect(() => {
