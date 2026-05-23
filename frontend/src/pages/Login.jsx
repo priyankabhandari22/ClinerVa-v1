@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Activity, ChevronRight, Stethoscope, UserCircle, ShieldCheck, HeartPulse } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Activity, ArrowLeft, ChevronRight, Stethoscope, UserCircle, ShieldCheck, HeartPulse } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -37,7 +37,7 @@ export default function Login() {
     }
 
     if (result.success) {
-      if (result.role === 'doctor') {
+      if ((result.role || '').toLowerCase() === 'doctor') {
         navigate('/doctor-dashboard');
       } else {
         navigate('/patient-dashboard');
@@ -127,6 +127,14 @@ export default function Login() {
 
       {/* Right Side - Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative bg-[#F0F9F4] z-10">
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="lg:hidden absolute top-4 left-4 z-20 inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/90 backdrop-blur border border-[#A8D5BA]/40 text-[#1B5E3A] shadow-lg shadow-[#2E7D5C]/10 active:scale-95 transition-all"
+          aria-label="Back to home"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
           <motion.div 
             animate={{ scale: [1, 1.2, 1], x: [0, -30, 0], y: [0, 40, 0] }}
@@ -291,7 +299,15 @@ export default function Login() {
                 {isLoginMode ? 'Sign Up' : 'Sign In'}
               </button>
             </p>
-            <div className="mt-4 text-center pt-6 border-t border-[#A8D5BA]/30">Login as Researcher </div>
+            <div className="mt-4 text-center pt-6 border-t border-[#A8D5BA]/30">
+              <Link
+                to="/researcher"
+                className="inline-flex items-center gap-2 font-bold text-[#1B5E3A] hover:text-[#2E7D5C] transition-colors"
+              >
+                Login as Researcher
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </motion.div>
       </div>

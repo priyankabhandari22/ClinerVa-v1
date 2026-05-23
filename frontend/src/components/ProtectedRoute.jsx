@@ -4,6 +4,8 @@ import { useAuth } from '../auth/AuthContext';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
+  const currentRole = (user?.role || '').toUpperCase();
+  const normalizedAllowedRoles = allowedRoles?.map((role) => role.toUpperCase());
 
   if (loading) {
     return (
@@ -19,9 +21,9 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   // If logged in but role doesn't match the required role for the route
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  if (normalizedAllowedRoles && !normalizedAllowedRoles.includes(currentRole)) {
     // Redirect them to their appropriate dashboard instead
-    return <Navigate to={user.role === 'doctor' ? '/doctor-dashboard' : '/patient-dashboard'} replace />;
+    return <Navigate to={currentRole === 'DOCTOR' ? '/doctor-dashboard' : '/patient-dashboard'} replace />;
   }
 
   return children;

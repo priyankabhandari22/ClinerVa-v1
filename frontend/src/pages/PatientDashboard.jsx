@@ -13,6 +13,8 @@ import {
   Download, BookmarkPlus,CheckCircle2 ,Filter,Search,Building2
 } from 'lucide-react';
 
+const MATCHING_ENGINE_BASE = 'http://127.0.0.1:8000';
+
 export default function PatientDashboard() {
   const navigate = useNavigate();
   const { logout, user, getAvatarUrl } = useAuth();
@@ -89,7 +91,7 @@ export default function PatientDashboard() {
     setMatchResults(null);
 
     try {
-      const response = await fetch('http://localhost:8000/match', {
+      const response = await fetch(`${MATCHING_ENGINE_BASE}/match`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

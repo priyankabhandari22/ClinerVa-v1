@@ -49,7 +49,7 @@ const connectDB = async () => {
 const createIndexes = async () => {
   try {
     // User indexes
-    await User.collection.createIndex({ email: 1 });
+    // Note: email index is auto-created by the schema (unique: true), no need to create it here.
     await User.collection.createIndex({ role: 1 });
     
     // Patient indexes

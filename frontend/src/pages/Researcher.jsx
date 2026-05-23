@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 import {
   TrendingUp, Database, Zap, Users, Upload, CheckCircle, Clock,
   Bell, ChevronDown, User, LogOut, Plus, BarChart3, LineChart,
@@ -9,6 +11,9 @@ import {
   Trash2, MoreVertical, Phone, Mail, Building, Loader, UserCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+const NODE_API_BASE = "http://localhost:5000/api";
+const AI_ENGINE_BASE = "http://localhost:8000";
 
 // ─── COLOR PALETTE - GREEN THEME ─────────────────────────────────────────────
 const Colors = {
@@ -97,7 +102,7 @@ function PanelTransition({ children, panelKey }) {
 }
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
-function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed }) {
+function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, onLogout }) {
   const navItems = [
     { id: "overview", label: "Overview", icon: <Activity size={18} /> },
     { id: "trials", label: "Clinical Trials", icon: <Microscope size={18} /> },
@@ -213,6 +218,7 @@ function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed }) {
       {/* Logout */}
       <div className="px-3 py-4 border-t" style={{ borderColor: `${Colors.lightGreen}20` }}>
         <motion.button
+          onClick={onLogout}
           className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all text-red-300"
           style={{ background: "rgba(239, 68, 68, 0.1)" }}
           whileHover={{ background: "rgba(239, 68, 68, 0.2)" }}
@@ -571,12 +577,12 @@ function TrialsPanel({ setActiveTab }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("http://localhost:8000/trials");
+      const res = await fetch(`${AI_ENGINE_BASE}/trials`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setAllTrials(data.trials || []);
     } catch (err) {
-      setError("Failed to load trials. Is the server running on port 8000?");
+      setError("Failed to load trials. Is the AI engine running on port 8000?");
       console.error(err);
     } finally {
       setLoading(false);
@@ -1139,7 +1145,7 @@ function CreateTrialPanel({ setActiveTab }) {
 
   useEffect(() => {
     // Fetch research labs so user can pick one
-    fetch("http://localhost:5001/api/auth/labs")
+    fetch(`${NODE_API_BASE}/auth/labs`)
       .then(r => r.json())
       .then(d => { if (d.labs) setLabs(d.labs); })
       .catch(() => { }); // silently fail — user can type ID manually
@@ -1187,7 +1193,7 @@ function CreateTrialPanel({ setActiveTab }) {
       };
 
       const res = await fetch(
-        `http://localhost:5001/api/trials/${selectedLabId.trim()}/create`,
+        `${NODE_API_BASE}/trials/${selectedLabId.trim()}/create`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1774,7 +1780,7 @@ function AnalysisPanel() {
     setTimeout(() => setActiveStep(4), 2500);
     
     try {
-      const response = await fetch('http://localhost:8000/reverse/match', {
+      const response = await fetch(`${AI_ENGINE_BASE}/reverse/match`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2637,9 +2643,16 @@ function ReportsPanel() {
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 export default function Researcher() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   const renderPanel = () => {
     switch (activeTab) {
@@ -2656,7 +2669,13 @@ export default function Researcher() {
 
   return (
     <div style={{ display: "flex", height: "100vh", background: Colors.bg, fontFamily: "'DM Sans', system-ui, sans-serif", overflow: "hidden" }} onClick={() => userMenuOpen && setUserMenuOpen(false)}>
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} collapsed={collapsed} setCollapsed={setCollapsed} />
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        onLogout={handleLogout}
+      />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
         <main style={{ flex: 1, overflowY: "auto", padding: "32px 36px" }} onClick={() => setUserMenuOpen(false)}>

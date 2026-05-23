@@ -276,7 +276,8 @@ export const aiCompareTrials = async (req, res) => {
 export const aiHealthCheck = async (req, res) => {
   try {
     const result = await AIMatchingService.healthCheck();
-    res.status(result.status === 'healthy' ? 200 : 503).json({ success: true, data: result });
+    // Keep this endpoint non-failing so UI status checks don't produce noisy 503 errors.
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

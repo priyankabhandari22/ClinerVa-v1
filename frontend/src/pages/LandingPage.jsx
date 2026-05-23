@@ -432,9 +432,9 @@ export default function LandingPage() {
             {/* Info cards */}
             <motion.div variants={fadeInUp} initial="hidden" whileInView="show" className="md:col-span-2 flex flex-col gap-6">
               {[
-                { icon: <Mail size={22} />, label: "Email", value: "hello@clinerva.health" },
+                { icon: <Mail size={22} />, label: "Email", value: "priyanka@clinerva.health" },
                 { icon: <Phone size={22} />, label: "Phone", value: "+91 98765 43210" },
-                { icon: <MapPin size={22} />, label: "Location", value: "VCET Campus, Tamil Nadu, India" },
+                { icon: <MapPin size={22} />, label: "Location", value: "TSEC Campus, Kandivali, Mumbai" },
               ].map((info, i) => (
                 <motion.div key={i} whileHover={{ x: 6 }}
                   className="flex items-start gap-5 bg-white/60 backdrop-blur-md border border-white/80 rounded-2xl p-6 shadow-sm">
