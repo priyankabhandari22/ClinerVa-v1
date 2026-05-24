@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: clinerva-backend
+    env: node
+    branch: priyanka-fixes
+    root: COHERENCE-26_LOCKBOX/backend
+    buildCommand: npm install --production
+    startCommand: npm start
+
+  - type: web
+    name: clinerva-ai-engine
+    env: python
+    branch: priyanka-fixes
+    root: COHERENCE-26_LOCKBOX
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:$PORT
+
+# Notes:
+# - Do NOT store secrets in this file. Set environment variables in Render dashboard.
+# - Replace `branch` with the branch you want Render to deploy.
