@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // ─── Base Axios Instance ────────────────────────────────────────────────────
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:5000/api',
+    baseURL: import.meta.env.VITE_API_BASE || 'https://clinerva-v1.onrender.com/api',//abhi frontend localhost se nhi baat kar raha , so render ka url de diya hai ok
     timeout: 30000,
 });
 

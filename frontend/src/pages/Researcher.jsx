@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const NODE_API_BASE = "http://localhost:5000/api";
+const NODE_API_BASE = "https://clinerva-v1.onrender.com/api";
 const AI_ENGINE_BASE = "http://localhost:8000";
 
 // ─── COLOR PALETTE - GREEN THEME ─────────────────────────────────────────────
