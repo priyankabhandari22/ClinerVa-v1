@@ -13,7 +13,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 
 const NODE_API_BASE = "https://clinerva-v1.onrender.com/api";
-const AI_ENGINE_BASE = "http://localhost:8000";
+const AI_ENGINE_BASE = "https://clinerva-v1-1.onrender.com";
 
 // ─── COLOR PALETTE - GREEN THEME ─────────────────────────────────────────────
 const Colors = {
