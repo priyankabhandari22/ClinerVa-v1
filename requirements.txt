@@ -10,3 +10,4 @@ joblib
 matplotlib
 google-generativeai
 python-dotenv
+google-genai
